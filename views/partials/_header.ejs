@@ -10,22 +10,22 @@
         <a class="nav-item nav-link" href="/urls/new">Create New URL</a>
       </div>
       <div>
-        <% if(!user_id) { %>
+        <% if(user_id) { %>
+          <form class="form-inline" method="POST" action="/logout">
+            <div class="form-group">
+              <p class="mb-0 mr-2" style="color:white"><b>Logged in as: </b><%=user_id.email%></p>
+              <button type="submit"> Log Out </button>
+            </div>
+          </form>
+        <% } %>
+        <% if (!user_id) { %>
           <form class = "form-inline" method="get" action="/login">
             <div class= "form-group">
               <button type="submit"> Log In </button>
             </form>
             <a class="nav-item nav-link" style="color:white"  href="/register">Register</a>
+            <% } %>
           </div>
-          <% } %>
-        <% if(user_id) { %>
-          <form class="form-inline" method="POST" action="/logout">
-            <div class="form-group">
-              <p class="mb-0 mr-2" style="color:white"><b>Logged in as: </b><%=users[user_id].email%></p>
-              <button type="submit"> Log Out </button>
-            </div>
-          </form>
-        <% } %>
       </div>
     </div>
   </nav>
