@@ -10,36 +10,38 @@ const helperFunc = require('./helperFunctions');
 
 app.set("view engine", "ejs");
 app.use(bodyParser.urlencoded({extended: true}));
-app.set('trust proxy', 1)
+app.set('trust proxy', 1);
 app.use(cookieSession({
   name: 'session',
   keys: ["firefox", "jotomate", "yoloxd"],
 
   // Cookie Options
   maxAge: 24 * 60 * 60 * 1000 // 24 hours
-}))
+}));
 
-const urlDatabase = {
+const urlDatabase = { //temp/test data
   b6UTxQ: {
-        longURL: "https://www.tsn.ca",
-        userID: "aJ48lW"
-    },
-    i3BoGr: {
-        longURL: "https://www.google.ca",
-        userID: "aJ48lW"
-    }
+    longURL: "https://www.tsn.ca",
+    userID: "aJ48lW"
+  },
+  i3BoGr: {
+    longURL: "https://www.google.ca",
+    userID: "aJ48lW"
+  }
 };
 
-const users = { 
-  "userRandomID": { id:   "userRandomID", 
-                    email: "user@example.com", 
-                    password: "purple-monkey-dinosaur"
-                  },
- "user1RandomID":  {id: "userRandomID", 
-                    email: "user2@example.com", 
-                    password: "dishwasher-funk"
-                   }
-}
+const users = { //temp/test data
+  "userRandomID": {
+    id:   "userRandomID",
+    email: "user@example.com",
+    password: "purple-monkey-dinosaur"
+  },
+  "user1RandomID":  {
+    id: "userRandomID",
+    email: "user2@example.com",
+    password: "dishwasher-funk"
+  }
+};
 
 //Paths
 
@@ -59,7 +61,7 @@ app.get("/urls/new", (req, res) => {
   const userIDCookie = users[req.session.user_id];
   const templateVars = { user_id: userIDCookie, userid: users[userIDCookie]};
 
-  if(!req.session["user_id"]) {
+  if (!req.session["user_id"]) {
     res.redirect("/login");
   }
   res.render("urls_new", templateVars);
@@ -82,19 +84,19 @@ app.get("/urls", (req, res) => {
 
 app.get("/urls/:shortURL", (req, res) => {
   const shortURL = req.params.shortURL;
-  const userIDCookie = users[req.session.user_id]
+  const userIDCookie = users[req.session.user_id];
   const templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[shortURL].longURL, user_id: userIDCookie, userid: users[userIDCookie]};
   res.render("urls_show", templateVars);
 });
 
 app.get("/u/:shortURL", (req, res) => {
   const shortURL = req.params.shortURL;
-  if(!urlDatabase[shortURL]) {
-    res.send("Error: Link is invalid")
-    return
+  if (!urlDatabase[shortURL]) {
+    res.send("Error: Link is invalid");
+    return;
   }
 
-  const longURL = urlDatabase[shortURL].longURL
+  const longURL = urlDatabase[shortURL].longURL;
   res.redirect(longURL);
 });
 
@@ -109,21 +111,21 @@ app.post("/register", (req, res) => {
   const password = bcrypt.hashSync(req.body.password, salt);
   const id = helperFunc.generateRandomString();
   
-  if(password === "" || email === "") {
+  if (password === "" || email === "") {
     res.status(400);
     res.send("Error, status code 400. No input detected for email or password. Please try again.");
     return;
   }
   
-  if(helperFunc.dupeEmail(email)) {
+  if (helperFunc.dupeEmail(email)) {
     res.status(400);
     res.send("Error, status code 400. Email is already in use. Please try again.");
     return;
-  };
+  }
 
   users[id] = {
-    id: id, 
-    email: email, 
+    id: id,
+    email: email,
     password: password
   };
   
@@ -135,10 +137,10 @@ app.post("/login", (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
 
-  if(helperFunc.dupeEmail(email, users)) {
-    if(helperFunc.passwordMatch(password, users, helperFunc.dupeEmail(email,users))) {
+  if (helperFunc.dupeEmail(email, users)) {
+    if (helperFunc.passwordMatch(password, users, helperFunc.dupeEmail(email,users))) {
       req.session.user_id = helperFunc.dupeEmail(email, users).id;
-      res.redirect("/urls")
+      res.redirect("/urls");
       return;
     }
   }
@@ -156,33 +158,32 @@ app.post("/urls/:shortURL/delete", (req, res) =>{
   const shortURL = req.params.shortURL;
   const user_id = req.session["user_id"];
 
-  if(urlDatabase[shortURL].userID === user_id) {
+  if (urlDatabase[shortURL].userID === user_id) {
     delete urlDatabase[shortURL];
     res.redirect("/urls");
     return;
-    } else {
-      res.status(403);
-      res.send("You are not permitted to delete this url.")
-      return;
-    }
+  } else {
+    res.status(403);
+    res.send("You are not permitted to delete this url.");
+    return;
+  }
 });
 
 app.post("/urls/:shortURL/update", (req, res) => {
   const shortURL = req.params.shortURL;
-  urlDatabase[shortURL].longURL = req.body.newUrl
-  res.redirect("/urls/")
+  urlDatabase[shortURL].longURL = req.body.newUrl;
+  res.redirect("/urls/");
 });
 
 app.post("/urls/:shortURL", (req, res) => {
   const shortURL = req.params.shortURL;
-  const templateVars = {shortURL: shortURL};
   res.redirect(`/urls/${shortURL}`);
 });
 
 app.post("/urls", (req, res) => {
   let randString = helperFunc.generateRandomString();
   urlDatabase[randString] = {
-    longURL:req.body.longURL, 
+    longURL:req.body.longURL,
     userID: req.session["user_id"]
   };
   
