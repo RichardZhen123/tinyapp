@@ -3,15 +3,13 @@ const app = express();
 const PORT = 8080; //default port 8080
 const cookieParser = require('cookie-parser')
 const bodyParser = require("body-parser");
+const bcrypt = require('bcryptjs');
+const salt = bcrypt.genSaltSync(10);
 
 app.set("view engine", "ejs");
 app.use(bodyParser.urlencoded({extended: true}));
 app.use(cookieParser());
 
-// const urlDatabase = {
-//     "b2xVn2": "http://www.lighthouselabs.ca",
-//     "9sm5xK": "http://www.google.com"
-// }
 
 const urlDatabase = {
   b6UTxQ: {
@@ -57,8 +55,10 @@ function dupeEmail (eAddress) {
 }
 
 function passwordMatch (pass) {
+  const hash = bcrypt.hashSync(pass, salt);
+
   for(id in users) {
-    if(users[id].password === pass) {
+    if(bcrypt.compareSync(pass, hash)) {
       return true;
     }
   }
@@ -99,7 +99,6 @@ app.get("/urls/new", (req, res) => {
 app.get("/urls", (req, res) => {
   const urlsForUser1 = urlsForUser(req.cookies["user_id"]);
   const templateVars = { urls: urlsForUser1, user_id: req.cookies["user_id"], users: users};
-  console.log(templateVars.urls);
   res.render("urls_index", templateVars);
 });
 
@@ -128,18 +127,18 @@ app.get("*", (req, res) => {
 
 app.post("/register", (req, res) => {
   const email = req.body.email;
-  const password = req.body.password;
+  const password = bcrypt.hashSync(req.body.password, salt);
   const id = generateRandomString();
   
   if(password === "" || email === "") {
     res.status(400);
-    res.send("Error, status code 400. Try again.");
+    res.send("Error, status code 400. No input detected for email or password. Please try again.");
     return;
   }
   
   if(dupeEmail(email)) {
     res.status(400);
-    res.send("Error, status code 400. Try again.");
+    res.send("Error, status code 400. Email is already in use. Please try again.");
     return;
   };
   
@@ -166,7 +165,7 @@ app.post("/login", (req, res) => {
   }
 
   res.status(403);
-  res.send("Error, status code 403");
+  res.send("Error, status code 403. Email or password did not match a profile. Please try again.");
 });
 
 app.post("/logout", (req, res) => {
@@ -191,8 +190,6 @@ app.post("/urls/:shortURL/delete", (req, res) =>{
   }
 });
 
-//let i = 0; i<urlDatabase.length; i++
-
 app.post("/urls/:shortURL/update", (req, res) => {
   const shortURL = req.params.shortURL;
   urlDatabase[shortURL].longURL = req.body.newUrl
@@ -216,5 +213,5 @@ app.post("/urls", (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`Example app listening on port ${PORT}`);
+  console.log(`TinyApp app listening on port ${PORT}`);
 });
